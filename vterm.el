@@ -1403,26 +1403,6 @@ If N is negative backward-line from end of buffer."
       (when raw-pwd
         (vterm--get-directory raw-pwd)))))
 
-(defun vterm--get-color-face-remap (index)
-  "Get color by index from `vterm-color-palette'.
-Argument INDEX index of the terminal color.
-Special values for INDEX are: for any input outside (0, 15),the
-function will return nil "
-  (if (and (>= index 0) (< index 16)) 
-      (let* ((palette-name (elt vterm-color-palette (% index 8)))
-	     (palette-item-v (alist-get palette-name face-remapping-alist))
-	     (palette-item (if palette-item-v 
-			       palette-item-v
-			     ;; if vterm-color-* theme-face not available
-			     ;; use term-color-* instead 
-			     (intern (substring (symbol-name palette-item-v) 1))))
-	     (palette-face (car palette-item)))
-	(if palette-face
-	    (let ((fgd (if (< index 8) :foreground :background)))
-	      (plist-get palette-face fgd))
-	  nil))
-    nil))
-
 
 (defun vterm--get-color-default (index)
   "Get color by index from `vterm-color-palette'.
@@ -1449,6 +1429,28 @@ of the `vterm-color-inverse-video' face is used in this case."
     nil)))
 
 
+(defun vterm--get-color-face-remap (index)
+  "Get color by index from `vterm-color-palette'.
+Argument INDEX index of the terminal color.
+Special values for INDEX are: for any input outside (0, 15),the
+function will return nil "
+  (if (and (>= index 0) (< index 16)) 
+      (let* ((palette-name-v (elt vterm-color-palette (% index 8)))
+	     (palette-item-v (alist-get palette-name-v face-remapping-alist))
+	     (palette-item (if palette-item-v 
+			       palette-item-v
+			     ;; if vterm-color-* theme-face not available
+			     ;; use term-color-* instead
+			     (let ((palette-name-t (intern (substring (symbol-name palette-name-v) 1))))
+			       (alist-get palette-name-t face-remapping-alist))))
+	     (palette-face (car palette-item)))
+	(if palette-face
+	    (let ((fgd (if (< index 8) :foreground :background)))
+	      (plist-get palette-face fgd))
+	  (vterm--get-color-default index)))
+    (vterm--get-color-default index)))
+
+
 (defun vterm--get-color (index)
   "Get color by index from `vterm-color-palette'.
 Argument INDEX index of the terminal color.
@@ -1458,10 +1460,9 @@ the `vterm-color-underline' face is used in this case.
 -12 background for cells with inverse video attribute, background
 of the `vterm-color-inverse-video' face is used in this case."
   (if (boundp 'face-remapping-alist)
-      (let ((local-face-val (vterm--get-color-face-remap index)))
-	(if local-face-val
-	    local-face-val
-	  (vterm--get-color-default index)))))
+      (vterm--get-color-default index)
+    (vterm--get-color-default index)))
+
 
 
 (defun vterm--eval (str)
