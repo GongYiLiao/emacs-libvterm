@@ -1460,7 +1460,7 @@ the `vterm-color-underline' face is used in this case.
 -12 background for cells with inverse video attribute, background
 of the `vterm-color-inverse-video' face is used in this case."
   (if (boundp 'face-remapping-alist)
-      (vterm--get-color-default index)
+      (vterm--get-color-face-remap index)
     (vterm--get-color-default index)))
 
 
